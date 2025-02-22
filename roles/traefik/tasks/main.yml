@@ -1,0 +1,35 @@
+---
+- name: Ensure docker compose plugin is installed
+  ansible.builtin.apt:
+    name: docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Create traefik directory
+  ansible.builtin.file:
+    path: /opt/traefik
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Copy Traefik docker-compose file
+  ansible.builtin.template:
+    src: traefik-docker-compose.yml.j2
+    dest: /opt/traefik/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
+- name: Create traefik-public network
+  community.docker.docker_network:
+    name: traefik-public
+    driver: bridge
+    state: present
+
+- name: Start Traefik service
+  ansible.builtin.shell: |
+    docker compose up -d
+  args:
+    chdir: /opt/traefik
+  changed_when: false
