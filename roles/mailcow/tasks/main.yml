@@ -1,0 +1,87 @@
+---
+- name: Ensure docker compose plugin is installed
+  ansible.builtin.apt:
+    name: docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Create directory for mailcow
+  ansible.builtin.file:
+    path: /opt/mailcow
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Download mailcow-dockerized
+  ansible.builtin.git:
+    repo: "https://github.com/mailcow/mailcow-dockerized.git"
+    dest: /opt/mailcow
+    version: master
+
+- name: Copy mailcow environment configuration
+  ansible.builtin.template:
+    src: mailcow.env.j2
+    dest: /opt/mailcow/.env
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
+# Optionally allow mail ports for direct connections.
+# You still need 25,465,587,993,995 for SMTP/IMAP/POP3
+# If you want to handle these directly or behind Traefik, adjust accordingly.
+- name: Allow mail-related ports in UFW
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop:
+    - 25 # SMTP
+    - 465 # SMTPS
+    - 587 # Submission
+    - 993 # IMAPS
+    - 995 # POP3S
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+# MERGE docker-compose.override.yml or use labels in mailcow docker-compose.yml to tell Traefik how to route
+- name: Add override for Traefik labels
+  ansible.builtin.copy:
+    dest: /opt/mailcow/docker-compose.override.yml
+    content: |
+      version: '3.8'
+      services:
+        nginx-mailcow:
+          # Do not expose on 80/443 to host
+          ports: []
+          networks:
+            - mailcow-network
+            - traefik-public
+          labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.mailcow.rule=Host(`{{ mailcow_hostname }}`)"
+            - "traefik.http.routers.mailcow.entrypoints=websecure"
+            - "traefik.http.routers.mailcow.tls.certresolver=myresolver"
+            # Optional: direct HTTP -> HTTPS redirect
+            - "traefik.http.routers.mailcow-http.rule=Host(`{{ mailcow_hostname }}`)"
+            - "traefik.http.routers.mailcow-http.entrypoints=web"
+            - "traefik.http.routers.mailcow-http.middlewares=redirect-to-https"
+            - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  become: true
+
+- name: Create or ensure mailcow-network
+  community.docker.docker_network:
+    name: mailcow-network
+    driver: bridge
+    state: present
+  become: true
+
+- name: Start Mailcow services
+  ansible.builtin.shell: |
+    docker compose pull
+    docker compose up -d
+  args:
+    chdir: /opt/mailcow
+  changed_when: false
