@@ -1,0 +1,2 @@
+[contabo_vps]
+<YOUR_CONTABO_IP> ansible_user=root ansible_password=<ROOT_PASSWORD>
