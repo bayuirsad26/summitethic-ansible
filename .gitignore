@@ -1,0 +1,60 @@
+# Ansible
+*.retry
+*.pyc
+__pycache__/
+.ansible/
+.vault_pass
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Environment files
+.env
+*.env
+.env.*
+
+# Vault files
+*vault*
+!vault.yml.example
+
+# SSH keys and certificates
+*.pem
+*.key
+id_*
+*.pub
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+
+# Inventory files except examples
+/inventories/**/hosts
+!/inventories/**/hosts.example
+
+# Group vars except examples
+/inventories/**/group_vars/*
+!/inventories/**/group_vars/*.example
+
+# Collections
+collections/
+
+# Roles downloaded from Galaxy
+roles/*/
+!roles/mailcow/
+!roles/root_setup/
+!roles/traefik/
+!roles/user_setup/
