@@ -1,0 +1,6 @@
+---
+- name: Reboot if needed
+  listen: Reboot if needed
+  ansible.builtin.reboot:
+    # The handler runs only if notified by a changed apt task
+    # No extra 'when:' needed
