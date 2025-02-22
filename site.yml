@@ -1,0 +1,32 @@
+---
+- name: "Root Setup"
+  hosts: contabo_vps
+  remote_user: root
+  gather_facts: true
+  become: true
+  roles:
+    - root_setup
+
+- name: "User Setup"
+  hosts: contabo_vps
+  remote_user: summitethic
+  gather_facts: true
+  become: true
+  roles:
+    - user_setup
+
+- name: "Traefik Setup"
+  hosts: contabo_vps
+  remote_user: summitethic
+  gather_facts: true
+  become: true
+  roles:
+    - traefik
+
+- name: "Mailcow Setup"
+  hosts: contabo_vps
+  remote_user: summitethic
+  gather_facts: true
+  become: true
+  roles:
+    - mailcow
