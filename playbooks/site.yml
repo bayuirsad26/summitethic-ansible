@@ -1,0 +1,48 @@
+---
+- name: "Common Setup - Base System Configuration"
+  hosts: all
+  remote_user: "{{ ansible_user }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - common
+  roles:
+    - common
+
+- name: "User Setup - Security Hardening and Service Preparations"
+  hosts: all
+  remote_user: "{{ ansible_user }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - user_setup
+  roles:
+    - user_setup
+
+- name: "Traefik Setup - Reverse Proxy Deployment"
+  hosts: all
+  remote_user: "{{ ansible_user }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - traefik
+  roles:
+    - traefik
+
+- name: "Mailcow Setup - Mail Server Deployment"
+  hosts: all
+  remote_user: "{{ ansible_user }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - mailcow
+  roles:
+    - mailcow

@@ -1,17 +1,13 @@
 ---
-- name: Update and upgrade the system (Debian/Ubuntu)
+- name: Update and upgrade the system
   ansible.builtin.apt:
     update_cache: true
     upgrade: dist
     autoremove: true
   register: system_update
-  notify: Reboot if needed
+  notify: "Reboot if needed"
+  tags: [bootstrap]
 
-- name: Create admin user 'summitethic'
-  ansible.builtin.user:
-    name: summitethic
-    shell: /bin/bash
-    groups: sudo
-    append: true
-    create_home: true
-    password: "{{ 'REPLACE_WITH_HASHED_PASSWORD' }}"
+- name: Include user creation tasks
+  ansible.builtin.include_tasks: user_creation.yml
+  tags: [bootstrap, user_creation]

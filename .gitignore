@@ -42,8 +42,8 @@ Thumbs.db
 *.log
 
 # Inventory files except examples
-/inventories/**/hosts
-!/inventories/**/hosts.example
+/inventories/**/hosts.yml
+!/inventories/**/hosts.yml.example
 
 # Group vars except examples
 /inventories/**/group_vars/*
@@ -54,7 +54,8 @@ collections/
 
 # Roles downloaded from Galaxy
 roles/*/
-!roles/mailcow/
+!roles/common/
 !roles/root_setup/
-!roles/traefik/
 !roles/user_setup/
+!roles/traefik/
+!roles/mailcow/

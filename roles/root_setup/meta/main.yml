@@ -1,0 +1,14 @@
+---
+dependencies: []
+galaxy_info:
+  author: SummitEthic
+  description: Role for initial system setup (system updates, admin user creation, SSH configuration and setting up passwordless sudo).
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all

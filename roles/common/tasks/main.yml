@@ -1,0 +1,19 @@
+---
+- name: Include packages tasks
+  ansible.builtin.include_tasks: packages.yml
+  tags: [common, packages]
+
+- name: Include security tasks
+  ansible.builtin.include_tasks: security.yml
+  tags: [common, security]
+
+- name: Configure timezone
+  community.general.timezone:
+    name: "{{ common_timezone }}"
+  tags: [common, timezone]
+
+- name: Configure locale
+  community.general.locale_gen:
+    name: "{{ common_locale }}"
+    state: present
+  tags: [common, locale]

@@ -1,6 +1,7 @@
 ---
 - name: Reboot if needed
-  listen: Reboot if needed
   ansible.builtin.reboot:
-    # The handler runs only if notified by a changed apt task
-    # No extra 'when:' needed
+    msg: "Reboot initiated by root_setup role due to system update"
+    connect_timeout: 5
+    reboot_timeout: 600
+  when: system_update.changed

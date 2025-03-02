@@ -1,0 +1,42 @@
+---
+- name: "System Maintenance"
+  hosts: all
+  remote_user: "{{ ansible_user }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - maintenance
+  tasks:
+    - name: Update and upgrade system packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+      tags:
+        - system_update
+
+    - name: Check disk space
+      ansible.builtin.command: df -h
+      register: disk_space
+      changed_when: false
+      tags:
+        - check_disk
+
+    - name: Display disk space
+      ansible.builtin.debug:
+        var: disk_space.stdout_lines
+      tags:
+        - check_disk
+
+    - name: Check service status
+      ansible.builtin.service_facts:
+      tags:
+        - check_services
+
+    - name: Display Docker service status
+      ansible.builtin.debug:
+        msg: "Docker service is {{ ansible_facts.services['docker.service'].state }}"
+      tags:
+        - check_services

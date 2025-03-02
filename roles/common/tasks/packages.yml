@@ -1,0 +1,13 @@
+---
+- name: Update and upgrade system packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    autoremove: true
+  tags: [common, packages]
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+  tags: [common, packages]

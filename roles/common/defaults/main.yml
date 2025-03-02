@@ -1,0 +1,18 @@
+---
+common_packages:
+  - vim
+  - htop
+  - tmux
+  - git
+  - curl
+  - wget
+  - unzip
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - python3-pip
+  - python3-setuptools
+
+common_timezone: "{{ system.timezone | default('UTC') }}"
+common_locale: "{{ system.locale | default('en_US.UTF-8') }}"

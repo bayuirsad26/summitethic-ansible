@@ -1,0 +1,35 @@
+---
+- name: Harden SSH - Disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PermitRootLogin"
+    line: "PermitRootLogin {{ user_setup_sshd_permit_root_login }}"
+    state: present
+  notify: Restart SSH
+  tags: [user_setup, ssh]
+
+- name: Harden SSH - Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication {{ user_setup_sshd_password_auth }}"
+    state: present
+  notify: Restart SSH
+  tags: [user_setup, ssh]
+
+- name: Install Fail2ban
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+    update_cache: true
+  tags: [user_setup, fail2ban]
+
+- name: Configure Fail2ban
+  ansible.builtin.copy:
+    src: "{{ user_setup_fail2ban_config_src }}"
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart fail2ban
+  tags: [user_setup, fail2ban]

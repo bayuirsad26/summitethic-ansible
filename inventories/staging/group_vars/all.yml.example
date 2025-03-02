@@ -1,7 +1,7 @@
 ---
-# Variabel untuk environment production
+# Variabel untuk environment staging
 ansible_user: summitethic
-environment: production
+environment: staging
 
 # Konfigurasi sistem
 system:
@@ -30,16 +30,16 @@ docker:
 
 # Konfigurasi Traefik
 traefik:
-  acme_email: "admin@summitethic.com"
+  acme_email: "admin@example.com"
   image: traefik:v2.9
 
 # Konfigurasi Mailcow
 mailcow:
-  hostname: mail.summitethic.com
+  hostname: mail-staging.example.com
   tz: UTC
   dbname: mailcow
   dbuser: mailcowuser
   # Gunakan vault untuk password di production
-  dbpass: "{{ vault_mailcow_dbpass }}"
-  dbroot: "{{ vault_mailcow_dbroot }}"
-  redispass: "{{ vault_mailcow_redispass }}"
+  dbpass: stagingpassword
+  dbroot: stagingrootpassword
+  redispass: stagingredispassword

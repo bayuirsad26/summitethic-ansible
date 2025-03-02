@@ -1,0 +1,37 @@
+---
+- name: Create admin user "{{ root_setup_admin_user }}"
+  ansible.builtin.user:
+    name: "{{ root_setup_admin_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: true
+    create_home: true
+    password: "{{ vault_root_setup_pass }}"
+  tags: [bootstrap]
+
+- name: Ensure .ssh directory exists for user {{ root_setup_admin_user }}
+  ansible.builtin.file:
+    path: "{{ root_setup_admin_ssh_dir }}"
+    state: directory
+    owner: "{{ root_setup_admin_user }}"
+    group: "{{ root_setup_admin_user }}"
+    mode: "0700"
+  tags: [bootstrap]
+
+- name: Copy public key to authorized_keys for user {{ root_setup_admin_user }}
+  ansible.posix.authorized_key:
+    user: "{{ root_setup_admin_user }}"
+    state: present
+    key: "{{ lookup('template', 'public_key.j2') }}"
+  register: user_key_added
+  tags: [bootstrap]
+
+- name: Allow passwordless sudo for {{ root_setup_admin_user }}
+  ansible.builtin.lineinfile:
+    path: "/etc/sudoers.d/{{ root_setup_admin_user }}"
+    line: "{{ root_setup_admin_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: true
+    mode: "0440"
+    validate: "visudo -cf %s"
+  register: passwordless_sudo
+  tags: [bootstrap]

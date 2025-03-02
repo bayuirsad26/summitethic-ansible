@@ -1,0 +1,18 @@
+---
+mailcow_git_repo: "https://github.com/mailcow/mailcow-dockerized.git"
+mailcow_dest: /opt/mailcow
+mailcow_branch: master
+mailcow_ports:
+  - 25
+  - 465
+  - 587
+  - 993
+  - 995
+mailcow_hostname: "{{ mailcow.hostname | default('mail.summitethic.com') }}"
+mailcow_tz: "{{ mailcow.tz | default('UTC') }}"
+mailcow_dbname: "{{ mailcow.dbname | default('mailcow') }}"
+mailcow_dbuser: "{{ mailcow.dbuser | default('mailcowuser') }}"
+mailcow_dbpass: "{{ mailcow.dbpass | default('password') }}"
+mailcow_dbroot: "{{ mailcow.dbroot | default('rootpassword') }}"
+mailcow_redispass: "{{ mailcow.redispass | default('redispassword') }}"
+mailcow_additional_san: "{{ mailcow.additional_san | default('') }}"

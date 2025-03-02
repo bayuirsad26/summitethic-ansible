@@ -1,0 +1,8 @@
+---
+# Contoh file vault untuk menyimpan password
+# Gunakan ansible-vault create inventories/production/group_vars/vault.yml untuk membuat file terenkripsi
+vault_mailcow_dbpass: "password_yang_aman"
+vault_mailcow_dbroot: "password_root_yang_aman"
+vault_mailcow_redispass: "password_redis_yang_aman"
+vault_root_setup_pass: "password_admin_yang_aman"
+vault_traefik_dashboard_auth: "admin:hashed_password"

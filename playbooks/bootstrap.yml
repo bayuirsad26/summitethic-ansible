@@ -1,0 +1,12 @@
+---
+- name: "Bootstrap - Initial System Setup"
+  hosts: all
+  remote_user: root
+  gather_facts: true
+  become: true
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/vault.yml"
+  tags:
+    - bootstrap
+  roles:
+    - role: root_setup

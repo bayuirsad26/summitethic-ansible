@@ -1,0 +1,23 @@
+---
+user_setup_username: summitethic
+user_setup_sshd_permit_root_login: "no"
+user_setup_sshd_password_auth: "no"
+user_setup_firewall_service: "ufw"
+user_setup_fail2ban_config_src: "files/fail2ban.jail.local"
+user_setup_firewall_rules:
+  - { port: 22, proto: tcp, rule: allow }
+  - { port: 80, proto: tcp, rule: allow }
+  - { port: 443, proto: tcp, rule: allow }
+user_setup_docker_dependencies:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+user_setup_docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+user_setup_docker_repository: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+user_setup_docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+user_setup_swap_multiplier: 2

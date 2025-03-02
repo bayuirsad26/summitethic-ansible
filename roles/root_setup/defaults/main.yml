@@ -1,0 +1,4 @@
+---
+root_setup_admin_user: summitethic
+root_setup_admin_ssh_dir: "/home/{{ root_setup_admin_user }}/.ssh"
+root_setup_admin_public_key: "roles/root_setup/files/id_ed25519_summitethic.pub"

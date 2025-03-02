@@ -1,0 +1,61 @@
+---
+- name: Check if swap file exists
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swap_file
+  tags: [user_setup, swap]
+
+- name: Disable existing swap
+  ansible.builtin.command: swapoff /swapfile
+  when: swap_file.stat.exists
+  failed_when: false
+  changed_when: swap_file.stat.exists
+  tags: [user_setup, swap]
+
+- name: Remove existing swap file
+  ansible.builtin.file:
+    path: /swapfile
+    state: absent
+  when: swap_file.stat.exists
+  tags: [user_setup, swap]
+
+- name: Calculate desired swap size in MB
+  ansible.builtin.set_fact:
+    desired_swap_mb: "{{ ansible_memtotal_mb * user_setup_swap_multiplier }}"
+  tags: [user_setup, swap]
+
+- name: Create swap file using dd
+  ansible.builtin.command: "dd if=/dev/zero of=/swapfile bs=1M count={{ desired_swap_mb }}"
+  args:
+    creates: /swapfile
+  register: swap_created
+  changed_when: true
+  tags: [user_setup, swap]
+
+- name: Set swap file permissions
+  ansible.builtin.file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: "0600"
+  tags: [user_setup, swap]
+
+- name: Format swap file
+  ansible.builtin.command: mkswap /swapfile
+  register: swap_formatted
+  changed_when: true
+  tags: [user_setup, swap]
+
+- name: Add swap to fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: "/swapfile swap swap defaults 0 0"
+    state: present
+  register: fstab_updated
+  tags: [user_setup, swap]
+
+- name: Enable swap
+  ansible.builtin.command: swapon /swapfile
+  register: swap_enabled
+  changed_when: true
+  tags: [user_setup, swap]

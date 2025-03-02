@@ -1,32 +1,30 @@
-# roles/traefik/templates/traefik-docker-compose.yml.j2
-
-version: '3.8'
-
 services:
   traefik:
-    image: traefik:v2.9
-    container_name: traefik
+    image: {{ traefik_image }}
     command:
-      - "--api.dashboard=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      # Let's Encrypt (HTTP challenge example)
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.myresolver.acme.email={{ traefik_letsencrypt_email | default('admin@example.com') }}"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+{% for cmd in traefik_command %}
+      - "{{ cmd }}"
+{% endfor %}
     ports:
-      - "80:80"
-      - "443:443"
+{% for port in traefik_ports %}
+      - "{{ port }}"
+{% endfor %}
     volumes:
-      - "./letsencrypt:/letsencrypt"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+{% for vol in traefik_volumes %}
+      - "{{ vol }}"
+{% endfor %}
     networks:
-      - traefik-public
+      - "{{ traefik_public_network }}"
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.{{ traefik_domain }}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users={{ traefik_dashboard_auth }}"
 
 networks:
-  traefik-public:
+  {{ traefik_public_network }}:
     external: true

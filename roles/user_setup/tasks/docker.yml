@@ -1,0 +1,33 @@
+---
+- name: Install Docker dependencies
+  ansible.builtin.apt:
+    name: "{{ user_setup_docker_dependencies }}"
+    state: present
+    update_cache: true
+  tags: [user_setup, docker]
+
+- name: Add Docker GPG key
+  ansible.builtin.apt_key:
+    url: "{{ user_setup_docker_gpg_key_url }}"
+    state: present
+  tags: [user_setup, docker]
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "{{ user_setup_docker_repository }}"
+    state: present
+  tags: [user_setup, docker]
+
+- name: Install Docker packages
+  ansible.builtin.apt:
+    name: "{{ user_setup_docker_packages }}"
+    state: present
+    update_cache: true
+  tags: [user_setup, docker]
+
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: "{{ user_setup_username }}"
+    append: true
+    groups: docker
+  tags: [user_setup, docker]

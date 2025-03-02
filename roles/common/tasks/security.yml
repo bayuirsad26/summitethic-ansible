@@ -1,0 +1,21 @@
+---
+- name: Ensure unattended-upgrades is installed
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+  tags: [common, security]
+
+- name: Configure unattended upgrades
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}";
+          "${distro_id}:${distro_codename}-security";
+      };
+      Unattended-Upgrade::Mail "root@localhost";
+      Unattended-Upgrade::Automatic-Reboot "true";
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [common, security]

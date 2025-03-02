@@ -1,0 +1,5 @@
+{% if root_setup_admin_public_key.startswith('/') %}
+{{ lookup('file', root_setup_admin_public_key) }}
+{% else %}
+{{ lookup('file', playbook_dir + '/../' + root_setup_admin_public_key) }}
+{% endif %}
