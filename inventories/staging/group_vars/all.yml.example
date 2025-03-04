@@ -43,3 +43,4 @@ mailcow:
   dbpass: stagingpassword
   dbroot: stagingrootpassword
   redispass: stagingredispassword
+  additional_san:

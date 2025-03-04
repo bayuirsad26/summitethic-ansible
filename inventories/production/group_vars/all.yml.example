@@ -43,3 +43,4 @@ mailcow:
   dbpass: "{{ vault_mailcow_dbpass }}"
   dbroot: "{{ vault_mailcow_dbroot }}"
   redispass: "{{ vault_mailcow_redispass }}"
+  additional_san:

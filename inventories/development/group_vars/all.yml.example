@@ -43,3 +43,4 @@ mailcow:
   dbpass: devpassword
   dbroot: devrootpassword
   redispass: devredispassword
+  additional_san:
