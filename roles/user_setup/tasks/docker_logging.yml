@@ -1,0 +1,46 @@
+---
+- name: Ensure /etc/docker directory exists
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+  tags: [user_setup, docker, logging]
+
+- name: Configure Docker daemon with log rotation
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3",
+          "compress": "true"
+        }
+      }
+    mode: "0644"
+  register: docker_daemon_config
+  tags: [user_setup, docker, logging]
+
+- name: Create logrotate configuration for Docker
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/docker-containers
+    content: |
+      /var/lib/docker/containers/*/*.log {
+        rotate 7
+        daily
+        compress
+        missingok
+        delaycompress
+        copytruncate
+        size 10M
+      }
+    mode: "0644"
+  tags: [user_setup, docker, logging]
+
+- name: Restart Docker service if configuration changed
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+  when: docker_daemon_config.changed
+  tags: [user_setup, docker, logging]

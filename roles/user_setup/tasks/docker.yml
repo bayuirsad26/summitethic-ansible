@@ -31,3 +31,13 @@
     append: true
     groups: docker
   tags: [user_setup, docker]
+
+- name: Install logrotate
+  ansible.builtin.apt:
+    name: logrotate
+    state: present
+  tags: [user_setup, docker, logging]
+
+- name: Include Docker logging configuration
+  ansible.builtin.include_tasks: docker_logging.yml
+  tags: [user_setup, docker, logging]
