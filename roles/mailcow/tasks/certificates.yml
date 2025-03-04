@@ -1,0 +1,59 @@
+---
+- name: Create SSL directory for Mailcow
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/assets/ssl"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, ssl]
+
+- name: Generate self-signed certificate for Mailcow
+  ansible.builtin.command: >
+    openssl req -new -newkey rsa:4096 -days 365 -nodes -x509
+    -subj "/CN={{ mailcow_hostname }}"
+    -keyout {{ mailcow_dest }}/data/assets/ssl/key.pem
+    -out {{ mailcow_dest }}/data/assets/ssl/cert.pem
+  args:
+    creates: "{{ mailcow_dest }}/data/assets/ssl/cert.pem"
+  tags: [mailcow, ssl]
+
+- name: Create system-wide SSL directory for Mailcow
+  ansible.builtin.file:
+    path: /etc/ssl/mail
+    state: directory
+    mode: "0755"
+  become: true
+  tags: [mailcow, ssl]
+
+- name: Copy certificates to the expected location
+  ansible.builtin.copy:
+    src: "{{ mailcow_dest }}/data/assets/ssl/{{ item.src }}"
+    dest: "/etc/ssl/mail/{{ item.dest }}"
+    remote_src: yes
+    mode: "0644"
+  become: true
+  loop:
+    - { src: "key.pem", dest: "key.pem" }
+    - { src: "cert.pem", dest: "cert.pem" }
+  tags: [mailcow, ssl]
+
+- name: Ensure certificates directory will be available in container
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/conf/nginx/ssl"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, ssl]
+
+- name: Copy certificates to nginx configuration directory
+  ansible.builtin.copy:
+    src: "{{ mailcow_dest }}/data/assets/ssl/{{ item.src }}"
+    dest: "{{ mailcow_dest }}/data/conf/nginx/ssl/{{ item.dest }}"
+    remote_src: yes
+    mode: "0644"
+  loop:
+    - { src: "key.pem", dest: "key.pem" }
+    - { src: "cert.pem", dest: "cert.pem" }
+  tags: [mailcow, ssl]

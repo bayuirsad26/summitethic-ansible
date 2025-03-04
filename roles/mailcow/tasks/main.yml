@@ -3,6 +3,10 @@
   ansible.builtin.include_tasks: install.yml
   tags: [mailcow, install]
 
+- name: Include certificates tasks
+  ansible.builtin.include_tasks: certificates.yml
+  tags: [mailcow, certificates]
+
 - name: Include configuration tasks
   ansible.builtin.include_tasks: configure.yml
   tags: [mailcow, configure]

@@ -24,6 +24,8 @@
       services:
         nginx-mailcow:
           ports: []
+          volumes:
+            - /etc/ssl/mail:/etc/ssl/mail:ro
           networks:
             - mailcow-network
             - traefik-public
