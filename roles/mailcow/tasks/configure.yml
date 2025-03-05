@@ -17,33 +17,34 @@
   when: ansible_facts['os_family'] == 'Debian'
   tags: [mailcow, ufw]
 
-- name: Create Docker Compose override for Traefik integration
+- name: Create Dovecot configuration directories
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/conf/dovecot/{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop:
+    - ""
+    - "extra"
+  tags: [mailcow, fix]
+
+- name: Copy custom Dovecot configuration
   ansible.builtin.copy:
-    dest: "{{ mailcow_dest }}/docker-compose.override.yml"
+    dest: "{{ mailcow_dest }}/data/conf/dovecot/extra/disable-fts.conf"
     content: |
-      services:
-        nginx-mailcow:
-          ports: []
-          volumes:
-            - /etc/ssl/mail:/etc/ssl/mail:ro
-          networks:
-            - mailcow-network
-            - traefik-public
-          labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.mailcow.rule=Host(`{{ mailcow_hostname }}`)"
-            - "traefik.http.routers.mailcow.entrypoints=websecure"
-            - "traefik.http.routers.mailcow.tls.certresolver=myresolver"
-            - "traefik.http.routers.mailcow-http.rule=Host(`{{ mailcow_hostname }}`)"
-            - "traefik.http.routers.mailcow-http.entrypoints=web"
-            - "traefik.http.routers.mailcow-http.middlewares=redirect-to-https"
-            - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-            - "traefik.http.services.mailcow.loadbalancer.server.port=8080"
-      networks:
-        traefik-public:
-          external: true
+      # Explicitly disable FTS to avoid the problematic sed command
+      mail_plugins = $mail_plugins quota imap_quota notify push_notification
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: "0644"
-  become: true
+  tags: [mailcow, fix]
+
+- name: Create Docker Compose override for integration
+  ansible.builtin.template:
+    src: templates/docker-compose.override.yml.j2
+    dest: "{{ mailcow_dest }}/docker-compose.override.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
   tags: [mailcow, docker, traefik]

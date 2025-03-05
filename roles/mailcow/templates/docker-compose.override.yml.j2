@@ -1,0 +1,37 @@
+services:
+  nginx-mailcow:
+    ports: []
+    volumes:
+      - /etc/ssl/mail:/etc/ssl/mail:ro
+    networks:
+      - mailcow-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailcow.rule=Host(`{{ mailcow_hostname }}`)"
+      - "traefik.http.routers.mailcow.entrypoints=websecure"
+      - "traefik.http.routers.mailcow.tls.certresolver=myresolver"
+      - "traefik.http.routers.mailcow-http.rule=Host(`{{ mailcow_hostname }}`)"
+      - "traefik.http.routers.mailcow-http.entrypoints=web"
+      - "traefik.http.routers.mailcow-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.services.mailcow.loadbalancer.server.port=8080"
+      
+  dovecot-mailcow:
+    entrypoint: ["/custom-entrypoint/entrypoint.sh"]
+    volumes:
+      - {{ mailcow_dest }}/data/conf/dovecot/custom-entrypoint:/custom-entrypoint:ro
+      - {{ mailcow_dest }}/data/conf/dovecot/extra:/usr/local/etc/dovecot/conf.d/extra:ro
+      - {{ mailcow_dest }}/data/logs:/var/log/mail:rw
+    environment:
+      - SKIP_FTS=y
+      - SKIP_SOLR=y
+
+  postfix-mailcow:
+    volumes:
+      - {{ mailcow_dest }}/data/logs:/var/log/mail:rw
+      - /etc/ssl/mail:/etc/ssl/mail:ro
+
+networks:
+  traefik-public:
+    external: true

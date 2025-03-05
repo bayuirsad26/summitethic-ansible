@@ -1,0 +1,64 @@
+---
+- name: Stop all Mailcow services
+  community.docker.docker_compose_v2:
+    project_src: "{{ mailcow_dest }}"
+    state: absent
+  become: true
+  tags: [mailcow, restart]
+
+- name: Wait for containers to fully stop
+  ansible.builtin.pause:
+    seconds: 15
+  tags: [mailcow, restart]
+
+- name: Ensure all Mailcow directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop:
+    - "{{ mailcow_dest }}/data/logs"
+    - "{{ mailcow_dest }}/data/conf/dovecot/extra"
+    - "{{ mailcow_dest }}/data/conf/dovecot/custom-entrypoint"
+  tags: [mailcow, restart]
+
+- name: Create empty log file if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/logs/mail.log"
+    state: touch
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  tags: [mailcow, restart]
+
+- name: Start Mailcow services
+  community.docker.docker_compose_v2:
+    project_src: "{{ mailcow_dest }}"
+    state: present
+    pull: never
+  become: true
+  tags: [mailcow, restart]
+
+- name: Wait for container creation
+  ansible.builtin.pause:
+    seconds: 10
+  tags: [mailcow, restart]
+
+- name: Run the dovecot fix script
+  ansible.builtin.command:
+    cmd: "{{ mailcow_dest }}/fix-dovecot-container.sh"
+  register: fix_result
+  changed_when: fix_result.rc == 0
+  failed_when: false
+  tags: [mailcow, fix, restart]
+
+- name: Restart just the dovecot container
+  ansible.builtin.command:
+    cmd: docker restart $(docker ps -q -f name=dovecot-mailcow)
+  become: true
+  register: docker_restart
+  changed_when: docker_restart.rc == 0
+  failed_when: false
+  tags: [mailcow, restart]

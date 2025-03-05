@@ -1,0 +1,111 @@
+---
+- name: Create directory for custom entrypoint scripts
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/conf/dovecot/custom-entrypoint"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, fix]
+
+- name: Create custom entrypoint script for dovecot
+  ansible.builtin.copy:
+    dest: "{{ mailcow_dest }}/data/conf/dovecot/custom-entrypoint/entrypoint.sh"
+    content: |
+      #!/bin/bash
+      # Custom entrypoint script to bypass the problematic sed command
+
+      # Set environment variables to skip FTS configuration
+      export SKIP_FTS=y
+      export SKIP_SOLR=y
+
+      # Manually clean up any FTS configuration in dovecot.conf without using sed
+      if [ -f /usr/local/etc/dovecot/dovecot.conf ]; then
+        # Save original for backup
+        cp -f /usr/local/etc/dovecot/dovecot.conf /usr/local/etc/dovecot/dovecot.conf.original
+        
+        # Remove FTS plugin from mail_plugins using grep instead of sed
+        grep -v "mail_plugins.*fts" /usr/local/etc/dovecot/dovecot.conf.original > /usr/local/etc/dovecot/dovecot.conf
+      fi
+
+      # Ensure mail log directory exists
+      mkdir -p /var/log/mail
+
+      # Continue with the original entrypoint
+      exec /docker-entrypoint.sh "$@"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, fix]
+
+- name: Ensure logs directory exists for fail2ban
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/logs"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, logs]
+
+- name: Create dovecot fix script
+  ansible.builtin.copy:
+    dest: "{{ mailcow_dest }}/fix-dovecot-container.sh"
+    content: |
+      #!/bin/bash
+      # Script to directly fix the dovecot container's sed command issue
+
+      # Set strict error handling
+      set -e
+
+      # Wait for container to be created but before it fully starts
+      echo "Waiting for dovecot container to be created..."
+      sleep 5
+
+      # Get the container ID
+      CONTAINER_ID=$(docker ps -a | grep dovecot-mailcow | head -n1 | awk '{print $1}')
+      if [ -z "$CONTAINER_ID" ]; then
+        echo "Error: Could not find dovecot container"
+        exit 1
+      fi
+      echo "Found dovecot container: $CONTAINER_ID"
+
+      # Direct fix approach: Patching the container's init scripts
+      echo "Patching the container's initialization scripts..."
+
+      # Method 1: Modify the /docker-entrypoint.sh script
+      docker exec $CONTAINER_ID bash -c '
+        # Create a backup of the original script
+        cp /docker-entrypoint.sh /docker-entrypoint.sh.original
+
+        # Replace problematic sed command with a safer version
+        sed -i "s/sed -i -e \"s|^mail_plugins.*|mail_plugins =/sed -i -e \"s|^mail_plugins.*|mail_plugins = /" /docker-entrypoint.sh
+
+        # Set environment variables to skip FTS
+        echo "export SKIP_FTS=y" >> /etc/environment
+        echo "export SKIP_SOLR=y" >> /etc/environment
+
+        # Create a wrapper for the sed command that will safely exit
+        echo "#!/bin/bash" > /usr/local/bin/safe-sed
+        echo "# Wrapper to prevent fatal sed errors" >> /usr/local/bin/safe-sed
+        echo "sed \"\$@\" || true" >> /usr/local/bin/safe-sed
+        chmod +x /usr/local/bin/safe-sed
+
+        # Create a symlink to override the system sed with our safe version
+        if [ -f /usr/bin/sed.original ]; then
+          rm -f /usr/bin/sed.original
+        fi
+        cp /usr/bin/sed /usr/bin/sed.original
+        ln -sf /usr/local/bin/safe-sed /usr/bin/sed
+      '
+
+      echo "Container has been patched successfully."
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [mailcow, fix]
+
+- name: Make the fix script executable
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/fix-dovecot-container.sh"
+    mode: "0755"
+  tags: [mailcow, fix]

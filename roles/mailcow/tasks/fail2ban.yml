@@ -1,0 +1,82 @@
+---
+- name: Ensure fail2ban is installed
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+  become: true
+  tags: [mailcow, fail2ban]
+
+- name: Ensure log directory exists and accessible
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/logs"
+    state: directory
+    mode: "0755"
+  become: true
+  tags: [mailcow, fail2ban]
+
+# Add this task to create an empty log file if it doesn't exist
+- name: Create empty mail.log file if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ mailcow_dest }}/data/logs/mail.log"
+    state: touch
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  tags: [mailcow, fail2ban]
+
+- name: Create fail2ban jail for Mailcow
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/mailcow.local
+    content: |
+      [mailcow]
+      enabled = true
+      port = 25,465,587,993,995
+      filter = mailcow
+      logpath = {{ mailcow_dest }}/data/logs/mail.log
+      maxretry = 10
+      findtime = 600
+      bantime = 300
+      action = %(action_mwl)s
+    mode: "0644"
+  become: true
+  tags: [mailcow, fail2ban]
+
+- name: Create fail2ban filter for Mailcow
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/filter.d/mailcow.conf
+    content: |
+      [Definition]
+      failregex = ^ [A-Z]+ for user .* from <HOST>\s+repeated login failures
+                  ^ [A-Z]+ login failures from <HOST>
+                  ^ [A-Z]+ failed password from <HOST> for .*
+                  ^ IMAP login failed for .* from <HOST>
+                  ^ POP3 login failed for .* from <HOST>
+      ignoreregex =
+    mode: "0644"
+  become: true
+  tags: [mailcow, fail2ban]
+
+# Use force=yes with the symlink for more robustness
+- name: Create symlinks for log files
+  ansible.builtin.file:
+    src: "{{ mailcow_dest }}/data/logs/mail.log"
+    dest: "/var/log/mailcow.log"
+    state: link
+    force: true
+  become: true
+  tags: [mailcow, fail2ban]
+
+- name: Ensure fail2ban jail directory exists
+  ansible.builtin.file:
+    path: /etc/fail2ban/jail.d
+    state: directory
+    mode: "0755"
+  become: true
+  tags: [mailcow, fail2ban]
+
+- name: Restart fail2ban service
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted
+  become: true
+  tags: [mailcow, fail2ban]

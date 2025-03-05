@@ -30,7 +30,7 @@
   ansible.builtin.copy:
     src: "{{ mailcow_dest }}/data/assets/ssl/{{ item.src }}"
     dest: "/etc/ssl/mail/{{ item.dest }}"
-    remote_src: yes
+    remote_src: true
     mode: "0644"
   become: true
   loop:
@@ -51,7 +51,7 @@
   ansible.builtin.copy:
     src: "{{ mailcow_dest }}/data/assets/ssl/{{ item.src }}"
     dest: "{{ mailcow_dest }}/data/conf/nginx/ssl/{{ item.dest }}"
-    remote_src: yes
+    remote_src: true
     mode: "0644"
   loop:
     - { src: "key.pem", dest: "key.pem" }

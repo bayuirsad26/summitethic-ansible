@@ -1,0 +1,13 @@
+---
+- name: Generate DH parameters file (this may take several minutes)
+  ansible.builtin.command:
+    cmd: openssl dhparam -out /etc/ssl/mail/dhparams.pem 2048
+    creates: /etc/ssl/mail/dhparams.pem
+  become: true
+  register: dhparams_result
+  tags: [mailcow, ssl]
+
+- name: Display DH parameters generation status
+  ansible.builtin.debug:
+    msg: "DH parameters file generation {{ 'completed' if dhparams_result.changed else 'skipped (file already exists)' }}"
+  tags: [mailcow, ssl]

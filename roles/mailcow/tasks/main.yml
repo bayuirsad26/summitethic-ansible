@@ -7,6 +7,18 @@
   ansible.builtin.include_tasks: certificates.yml
   tags: [mailcow, certificates]
 
+- name: Include SSL parameters generation
+  ansible.builtin.include_tasks: ssl-params.yml
+  tags: [mailcow, ssl]
+
+- name: Include dovecot fix tasks
+  ansible.builtin.include_tasks: fix-dovecot.yml
+  tags: [mailcow, fix]
+
+- name: Include fail2ban configuration
+  ansible.builtin.include_tasks: fail2ban.yml
+  tags: [mailcow, fail2ban]
+
 - name: Include configuration tasks
   ansible.builtin.include_tasks: configure.yml
   tags: [mailcow, configure]
@@ -19,10 +31,6 @@
   become: true
   tags: [mailcow, docker]
 
-- name: Deploy Mailcow using Docker Compose
-  community.docker.docker_compose_v2:
-    project_src: "{{ mailcow_dest }}"
-    state: present
-    pull: always
-  become: true
-  tags: [mailcow, docker]
+- name: Include restart tasks
+  ansible.builtin.include_tasks: restart.yml
+  tags: [mailcow, restart]
